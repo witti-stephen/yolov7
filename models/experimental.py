@@ -158,10 +158,10 @@ class TRT_NMS(torch.autograd.Function):
 
 class ONNX_ORT(nn.Module):
     '''onnx module with ONNX-Runtime NMS operation.'''
-    # [Start Update End2End to include --not-concat-final]
+    # [Start Update End2End to include --non-concat-final]
     # def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=640, device=None):
     def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=640, device=None, non_concat_final=True):
-    # [End Update End2End to include --not-concat-final]
+    # [End Update End2End to include --non-concat-final]
         super().__init__()
         self.device = device if device else torch.device("cpu")
         self.max_obj = torch.tensor([max_obj]).to(device)
@@ -171,6 +171,9 @@ class ONNX_ORT(nn.Module):
         self.convert_matrix = torch.tensor([[1, 0, 1, 0], [0, 1, 0, 1], [-0.5, 0, 0.5, 0], [0, -0.5, 0, 0.5]],
                                            dtype=torch.float32,
                                            device=self.device)
+        # [Start Update End2End to include --non-concat-final]
+        self.non_concat_final = non_concat_final
+        # [End Update End2End to include --non-concat-final]
 
     def forward(self, x):
         boxes = x[:, :, :4]
@@ -188,13 +191,13 @@ class ONNX_ORT(nn.Module):
         selected_categories = category_id[X, Y, :].float()
         selected_scores = max_score[X, Y, :]
         X = X.unsqueeze(1).float()
-        # [Start Update End2End to include --not-concat-final]
+        # [Start Update End2End to include --non-concat-final]
         # return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
-        if non_concat_final:
+        if self.non_concat_final:
             return det_boxes, det_classes, det_scores, num_det # tflite required 4 return in such sequence
         else:
             return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
-        # [End Update End2End to include --not-concat-final]
+        # [End Update End2End to include --non-concat-final]
 
 class ONNX_TRT(nn.Module):
     '''onnx module with TensorRT NMS operation.'''
