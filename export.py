@@ -163,6 +163,10 @@ if __name__ == '__main__':
             else:
                 model.model[-1].concat = True
 
+        # [Start Update to respect --nwhc]
+        if opt.nwhc:
+            img = img.permute(0,2,3,1)
+        # [End Update to respect --nwhc] 
         torch.onnx.export(model, img, f, verbose=False, opset_version=12, input_names=['images'],
                           output_names=output_names,
                           dynamic_axes=dynamic_axes)
