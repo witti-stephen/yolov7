@@ -158,7 +158,10 @@ class TRT_NMS(torch.autograd.Function):
 
 class ONNX_ORT(nn.Module):
     '''onnx module with ONNX-Runtime NMS operation.'''
-    def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=640, device=None):
+    # [Start Update End2End to include --not-concat-final]
+    # def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=640, device=None):
+    def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=640, device=None, non_concat_final=True):
+    # [End Update End2End to include --not-concat-final]
         super().__init__()
         self.device = device if device else torch.device("cpu")
         self.max_obj = torch.tensor([max_obj]).to(device)
@@ -185,11 +188,21 @@ class ONNX_ORT(nn.Module):
         selected_categories = category_id[X, Y, :].float()
         selected_scores = max_score[X, Y, :]
         X = X.unsqueeze(1).float()
-        return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
+        # [Start Update End2End to include --not-concat-final]
+        # return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
+        if non_concat_final:
+            return det_boxes, det_classes, det_scores, num_det # tflite required 4 return in such sequence
+        else:
+            return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
+        # [End Update End2End to include --not-concat-final]
 
 class ONNX_TRT(nn.Module):
     '''onnx module with TensorRT NMS operation.'''
-    def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None ,device=None):
+    # [Start Update End2End to include --not-concat-final]
+    # def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None ,device=None):
+    # no opt is needed for the added parm
+    def __init__(self, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None ,device=None, non_concat_final=True):
+    # [End Update End2End to include --not-concat-final]
         super().__init__()
         assert max_wh is None
         self.device = device if device else torch.device('cpu')
@@ -215,17 +228,31 @@ class ONNX_TRT(nn.Module):
 
 class End2End(nn.Module):
     '''export onnx or tensorrt model with NMS operation.'''
-    def __init__(self, model, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None, device=None):
+    # [Start Update End2End to include --nwhc and --not-concat-final]
+    # def __init__(self, model, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None, device=None):
+    def __init__(self, model, max_obj=100, iou_thres=0.45, score_thres=0.25, max_wh=None, device=None, nwch=False, non_concat_final=True):
+    # [End Update End2End to include --nwhc and --not-concat-final]
         super().__init__()
         device = device if device else torch.device('cpu')
         assert isinstance(max_wh,(int)) or max_wh is None
         self.model = model.to(device)
         self.model.model[-1].end2end = True
         self.patch_model = ONNX_TRT if max_wh is None else ONNX_ORT
-        self.end2end = self.patch_model(max_obj, iou_thres, score_thres, max_wh, device)
+        # [Start Update End2End to include --not-concat-final]
+        self.end2end = self.patch_model(max_obj, iou_thres, score_thres, max_wh, device, non_concat_final)
+        # self.end2end = self.patch_model(max_obj, iou_thres, score_thres, max_wh, device)
+        # [End Update End2End to include --not-concat-final]
+
+        # [Start Update End2End to include --nwhc]
+        self.nwch = nwch
+        # [End Update End2End to include --nwhc]
         self.end2end.eval()
 
     def forward(self, x):
+        # [Start Update End2End to include --nwhc]
+        if self.nwch:
+            x = x.permute(0,2,3,1) # NWCH (TFLITE expected input) => NCHW (expected by Yolo model)
+        # [End Update End2End to include --nwhc]
         x = self.model(x)
         x = self.end2end(x)
         return x

@@ -26,6 +26,10 @@ if __name__ == '__main__':
     parser.add_argument('--grid', action='store_true', help='export Detect() layer grid')
     parser.add_argument('--end2end', action='store_true', help='export end2end onnx')
     parser.add_argument('--max-wh', type=int, default=None, help='None for tensorrt nms, int value for onnx-runtime nms')
+    # [Start Custom added argument] 
+    parser.add_argument('--nwhc', action='store_true', default=None, help='add a layer infront to permute from NWHC (TFlite expected) to NCWH (Pytorch original Yolo model expected)')
+    parser.add_argument('--not-concat-final', action='store_true', default=None, help='for onnx-runtime nms, omit output concated, instead output ')
+    # [End Custom added argument] 
     parser.add_argument('--topk-all', type=int, default=100, help='topk objects for every images')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='iou threshold for NMS')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='conf threshold for NMS')
@@ -146,7 +150,10 @@ if __name__ == '__main__':
         if opt.grid:
             if opt.end2end:
                 print('\nStarting export end2end onnx model for %s...' % 'TensorRT' if opt.max_wh is None else 'onnxruntime')
-                model = End2End(model,opt.topk_all,opt.iou_thres,opt.conf_thres,opt.max_wh,device)
+                # [Start Update End2End to include --nwhc and --not-concat-final] 
+                model = End2End(model,opt.topk_all,opt.iou_thres,opt.conf_thres,opt.max_wh,device, opt.nwhc, opt.non_concat_final)
+                # model = End2End(model,opt.topk_all,opt.iou_thres,opt.conf_thres,opt.max_wh,device)
+                # [End Update End2End to include --nwhc and --not-concat-final] 
                 if opt.end2end and opt.max_wh is None:
                     output_names = ['num_dets', 'det_boxes', 'det_scores', 'det_classes']
                     shapes = [opt.batch_size, 1, opt.batch_size, opt.topk_all, 4,
