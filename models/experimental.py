@@ -251,7 +251,7 @@ class End2End(nn.Module):
     def forward(self, x):
         # [Start Update End2End to include --nwhc]
         if self.nwch:
-            x = x.permute(0,2,3,1) # NWCH (TFLITE expected input) => NCHW (expected by Yolo model)
+            x = x.permute(0,3,1,2) # NWHC (TFLITE expected input) => NCHW (expected by Yolo model)
         # [End Update End2End to include --nwhc]
         x = self.model(x)
         x = self.end2end(x)

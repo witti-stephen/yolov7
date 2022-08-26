@@ -165,7 +165,7 @@ if __name__ == '__main__':
 
         # [Start Update to respect --nwhc]
         if opt.nwhc:
-            img = img.permute(0,2,3,1)
+            img = img.permute(0,2,3,1) # NCWH => NWHC
         # [End Update to respect --nwhc] 
         torch.onnx.export(model, img, f, verbose=False, opset_version=12, input_names=['images'],
                           output_names=output_names,
