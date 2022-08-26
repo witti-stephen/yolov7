@@ -161,7 +161,7 @@ if __name__ == '__main__':
                 else:
                     # [Start Update End2End to include--not-concat-final] 
                     if opt.non_concat_final:
-                        output_names = [, 'det_boxes', 'det_classes', 'det_scores', 'num_dets']
+                        output_names = ['det_boxes', 'det_classes', 'det_scores', 'num_dets']
                     else:
                         output_names = ['output']    
                     # output_names = ['output']

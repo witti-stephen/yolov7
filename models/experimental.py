@@ -194,7 +194,7 @@ class ONNX_ORT(nn.Module):
         # [Start Update End2End to include --non-concat-final]
         # return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
         if self.non_concat_final:
-            return selected_boxes, selected_categories, selected_scores, len(selected_scores) # tflite required 4 return in such sequence
+            return selected_boxes, selected_categories, selected_scores, boxes.shape[0] # tflite required 4 return in such sequence
         else:
             return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
         # [End Update End2End to include --non-concat-final]
