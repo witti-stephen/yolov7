@@ -28,7 +28,7 @@ if __name__ == '__main__':
     parser.add_argument('--max-wh', type=int, default=None, help='None for tensorrt nms, int value for onnx-runtime nms')
     # [Start Custom added argument] 
     parser.add_argument('--nwhc', action='store_true', default=None, help='add a layer infront to permute from NWHC (TFlite expected) to NCWH (Pytorch original Yolo model expected)')
-    parser.add_argument('--not-concat-final', action='store_true', default=None, help='for onnx-runtime nms, omit output concated, instead output ')
+    parser.add_argument('--non-concat-final', action='store_true', default=None, help='for onnx-runtime nms, omit output concated, instead output ')
     # [End Custom added argument] 
     parser.add_argument('--topk-all', type=int, default=100, help='topk objects for every images')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='iou threshold for NMS')
