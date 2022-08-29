@@ -195,7 +195,9 @@ class ONNX_ORT(nn.Module):
         # return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
         if self.non_concat_final:
             # the expected sequence is box, class, score, count, but  empirically this return sequence give the expected ONNX sequence...
-            return selected_scores, selected_boxes, selected_categories, selected_indices.shape[0] # tflite required 4 return in such sequence
+            # the box need to unsqueeze to add batch dimension
+            # expected dimetion for results: (1, #count, 4), (1, #count), (1, #count), (1,)
+            return selected_scores.reshape(1,-1), selected_boxes.unsqueeze(-1).permute(2,0,1), selected_categories.reshape(1,-1), selected_indices.shape[0].unsqueeze(-1) # tflite required 4 return in such sequence
         else:
             return torch.cat([X, selected_boxes, selected_categories, selected_scores], 1)
         # [End Update End2End to include --non-concat-final]
