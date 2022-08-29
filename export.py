@@ -158,14 +158,12 @@ if __name__ == '__main__':
                     output_names = ['num_dets', 'det_boxes', 'det_scores', 'det_classes']
                     shapes = [opt.batch_size, 1, opt.batch_size, opt.topk_all, 4,
                               opt.batch_size, opt.topk_all, opt.batch_size, opt.topk_all]
+                # [Start Update End2End to include--not-concat-final] 
+                elif opt.non_concat_final:
+                    output_names = ['det_boxes', 'det_classes', 'det_scores', 'num_dets']
+                # [End Update End2End to include--not-concat-final]                     
                 else:
-                    # [Start Update End2End to include--not-concat-final] 
-                    if opt.non_concat_final:
-                        output_names = ['det_boxes', 'det_classes', 'det_scores', 'num_dets']
-                    else:
-                        output_names = ['output']    
-                    # output_names = ['output']
-                    # [End Update End2End to include--not-concat-final] 
+                    output_names = ['output']                                        
             else:
                 model.model[-1].concat = True
 
